@@ -12,6 +12,7 @@ deb:
 
 context-deb:
 	../../context-linux/build-vyos-deb.sh
+	../../context-linux/tests/test-vyos-package.sh ../../context-linux/out/one-context-vyos_7.4.0-0.deb
 
 deb-all: deb context-deb
 

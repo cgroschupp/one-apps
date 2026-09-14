@@ -1,0 +1,14 @@
+[Unit]
+Description=OpenNebula contextualization for VyOS
+DefaultDependencies=no
+Wants=dev-sr0.device local-fs.target
+After=local-fs.target dev-sr0.device
+Before=network-pre.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/one-contextd all
+
+[Install]
+WantedBy=multi-user.target

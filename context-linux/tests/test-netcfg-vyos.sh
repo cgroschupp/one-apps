@@ -45,8 +45,8 @@ export ETH0_IP6_GATEWAY='2001:db8::1'
 export SET_HOSTNAME='router.example.test'
 export ONEGATE_ENDPOINT='http://169.254.16.9:5030'
 
-# shellcheck source=../src/etc/one-context.d/loc-10-network.d/functions
-. "${ROOT}/src/etc/one-context.d/loc-10-network.d/functions"
+# shellcheck source=../pkg/overlay.vyos/etc/one-context.d/loc-10-network.d/functions
+. "${ROOT}/pkg/overlay.vyos/etc/one-context.d/loc-10-network.d/functions"
 # shellcheck source=/dev/null
 . "${ROOT}/src/etc/one-context.d/loc-10-network.d/netcfg-vyos##vyos"
 
@@ -71,5 +71,11 @@ if grep -Fq $'\tset protocols static route 198.51.100.0/24' "${VYOS_CONTEXT_STAT
     echo 'removed route remains in desired state' >&2
     exit 1
 fi
+
+unset ETH0_IP ETH0_NETWORK ETH0_MASK ETH0_GATEWAY ETH0_METRIC ETH0_IP6 ETH0_IP6_GATEWAY
+export ETH0_METHOD='dhcp'
+export ETH0_IP6_METHOD='skip'
+configure_network
+grep -Fq $'delete interfaces ethernet eth0 address dhcp\tset interfaces ethernet eth0 address dhcp' "${VYOS_CONTEXT_STATE}"
 
 echo 'VyOS network backend test passed'

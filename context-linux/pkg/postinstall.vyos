@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-SERVICES=${SERVICES:-one-context-local one-context-online one-context}
+SERVICES=${SERVICES:-one-context}
 TIMERS=${TIMERS:-one-context-reconfigure.timer}
 
 install -d -m 0700 /config/one-context

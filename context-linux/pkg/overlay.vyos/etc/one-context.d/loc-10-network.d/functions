@@ -1,0 +1,214 @@
+#!/usr/bin/env bash
+
+# Shared data helpers required by the native VyOS backend.
+export required_context_type='local'
+
+is_true()
+(
+    case "$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')" in
+        1|true|yes|y) return 0 ;;
+        *) return 1 ;;
+    esac
+)
+
+get_iface_var()
+(
+    _iface=$(printf '%s' "$1" | tr '[:lower:]' '[:upper:]')
+    _var_name="${_iface}_${2}"
+    eval "printf '%s\\n' \"\${${_var_name}:-}\""
+)
+
+mask2cidr()
+(
+    _mask=$1
+    _bits=0
+    _old_ifs=${IFS}
+    IFS=.
+    for _octet in ${_mask}; do
+        case "${_octet}" in
+            255) _bits=$((_bits + 8)) ;;
+            254) _bits=$((_bits + 7)); break ;;
+            252) _bits=$((_bits + 6)); break ;;
+            248) _bits=$((_bits + 5)); break ;;
+            240) _bits=$((_bits + 4)); break ;;
+            224) _bits=$((_bits + 3)); break ;;
+            192) _bits=$((_bits + 2)); break ;;
+            128) _bits=$((_bits + 1)); break ;;
+            0) break ;;
+            *) echo "ERROR [!]: Invalid IPv4 mask '${_mask}'" >&2; return 1 ;;
+        esac
+    done
+    IFS=${_old_ifs}
+    printf '%s\n' "${_bits}"
+)
+
+get_ip()
+{
+    get_iface_var "$1" IP
+}
+
+get_mask()
+{
+    _mask=$(get_iface_var "$1" MASK)
+    printf '%s\n' "${_mask:-255.255.255.0}"
+}
+
+get_network()
+(
+    _network=$(get_iface_var "$1" NETWORK)
+    if [ -n "${_network}" ]; then
+        printf '%s\n' "${_network}"
+        return 0
+    fi
+
+    _ip=$(get_ip "$1")
+    [ -n "${_ip}" ] || return 0
+    _mask=$(get_mask "$1")
+    IFS=. read -r _i1 _i2 _i3 _i4 <<EOF
+${_ip}
+EOF
+    IFS=. read -r _m1 _m2 _m3 _m4 <<EOF
+${_mask}
+EOF
+    printf '%s.%s.%s.%s\n' \
+        "$((10#${_i1} & 10#${_m1}))" \
+        "$((10#${_i2} & 10#${_m2}))" \
+        "$((10#${_i3} & 10#${_m3}))" \
+        "$((10#${_i4} & 10#${_m4}))"
+)
+
+get_gateway()
+{
+    get_iface_var "$1" GATEWAY
+}
+
+get_dns()
+{
+    get_iface_var "$1" DNS
+}
+
+get_search_domain()
+{
+    get_iface_var "$1" SEARCH_DOMAIN
+}
+
+get_interface_alias()
+(
+    env | sed -n "s/^\(${1}_ALIAS[0-9][0-9]*\)_MAC=.*/\1/p" | sort
+)
+
+get_context_interfaces()
+(
+    env | sed -n 's/^\(ETH[0-9][0-9]*\)_MAC=.*/\1/p' | sort
+)
+
+get_interface_mac()
+(
+    ip link show | awk '
+        /^[0-9]+: [A-Za-z0-9@_.:-]+:/ {
+            device=$2
+            gsub(/:/, "", device)
+            split(device, names, "@")
+        }
+        /link\/ether/ { print names[1], $2 }
+    '
+)
+
+get_dev()
+(
+    printf '%s\n' "$1" | awk -v mac="$2" 'tolower($2) == tolower(mac) { dev=$1 } END { print dev }'
+)
+
+setup_ipadr_vars()
+{
+    export ip network mask cidr
+    ip=$(get_ip "$1")
+    network=$(get_network "$1")
+    mask=$(get_mask "$1")
+    cidr=$(mask2cidr "${mask}")
+}
+
+setup_ip6adr_vars()
+{
+    export ip6 ip6_prefix_length ip6_ula
+    ip6=$(get_iface_var "$1" IP6)
+    ip6_prefix_length=$(get_iface_var "$1" IP6_PREFIX_LENGTH)
+    ip6_ula=$(get_iface_var "$1" IP6_ULA)
+    [ -n "${ip6}" ] || ip6=$(get_iface_var "$1" IPV6)
+    ip6_prefix_length=${ip6_prefix_length:-64}
+}
+
+setup_iface_vars()
+{
+    _iface_mac=$(get_interface_mac)
+
+    export mac dev mtu gateway metric dns search_domains method static_routes
+    export ip6_gateway ip6_metric ip6_method
+    mac=$(get_iface_var "$1" MAC)
+    dev=$(get_dev "${_iface_mac}" "${mac}")
+    mtu=$(get_iface_var "$1" MTU)
+    gateway=$(get_gateway "$1")
+    metric=$(get_iface_var "$1" METRIC)
+    dns=$(get_dns "$1")
+    search_domains=$(get_search_domain "$1")
+    method=$(get_iface_var "$1" METHOD)
+    ip6_gateway=$(get_iface_var "$1" IP6_GATEWAY)
+    ip6_metric=$(get_iface_var "$1" IP6_METRIC)
+    ip6_method=$(get_iface_var "$1" IP6_METHOD)
+    static_routes=$(get_iface_var "$1" ROUTES)
+
+    [ -n "${ip6_gateway}" ] || ip6_gateway=$(get_iface_var "$1" GATEWAY6)
+    method=${method:-static}
+    ip6_method=${ip6_method:-${method}}
+    ip6_metric=${ip6_metric:-${metric}}
+
+    setup_ipadr_vars "$1"
+    setup_ip6adr_vars "$1"
+}
+
+setup_alias_vars()
+{
+    export external detach
+    external=$(get_iface_var "$1" EXTERNAL)
+    detach=$(get_iface_var "$1" DETACH)
+}
+
+get_nameservers()
+(
+    _variables=$(env | sed -n 's/^\(ETH[0-9][0-9]*_DNS\)=.*/\1/p' | sort)
+    for _variable in DNS ${_variables}; do
+        eval "_value=\${${_variable}:-}"
+        [ -z "${_value}" ] || printf '%s\n' "${_value}"
+    done
+)
+
+get_searchdomains()
+(
+    _variables=$(env | sed -n 's/^\(ETH[0-9][0-9]*_SEARCH_DOMAIN\)=.*/\1/p' | sort)
+    for _variable in SEARCH_DOMAIN ${_variables}; do
+        eval "_value=\${${_variable}:-}"
+        [ -z "${_value}" ] || printf '%s\n' "${_value}"
+    done
+)
+
+is_link_local()
+{
+    case "$1" in
+        169.254.*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+get_onegate_ip()
+{
+    onegate_host=
+    if [ -n "${ONEGATE_ENDPOINT:-}" ]; then
+        onegate_host=$(printf '%s' "${ONEGATE_ENDPOINT}" | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' | head -n1)
+    fi
+    export onegate_host
+}
+
+missing_onegate_proxy_route()
+{
+    [ "${onegate_proxy_route_missing:-no}" = 'yes' ] && is_link_local "${onegate_host}"
+}

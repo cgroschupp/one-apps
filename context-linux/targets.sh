@@ -4,12 +4,14 @@ case "${TARGET}" in
         RELSUFFIX=${RELSUFFIX:-}
         TYPE=${TYPE:-deb}
         TAGS=${TAGS:-linux deb systemd one vyos}
-        DEPENDS=${DEPENDS:-util-linux bash curl sudo passwd ruby}
+        DEPENDS=${DEPENDS:-util-linux bash curl login}
         PROVIDES=${PROVIDES:-one-context}
         REPLACES=${REPLACES:-one-context addon-context}
         CONFLICTS=${CONFLICTS:-one-context one-context-ec2 addon-context}
+        FILELIST=${FILELIST:-pkg/filelist.vyos}
+        OVERLAY=${OVERLAY:-pkg/overlay.vyos}
         POSTIN=${POSTINST:-pkg/postinstall.vyos}
-        PREUN=${PREUN:-pkg/preuninstall}
+        PREUN=${PREUN:-pkg/preuninstall.vyos}
         POSTUN=${POSTUN:-pkg/postuninstall}
         POSTUP=${POSTUP:-pkg/postupgrade}
         ;;

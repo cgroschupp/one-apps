@@ -119,6 +119,31 @@ for F in "$@"; do
     cp -r "$F" "${BUILD_DIR}/"
 done
 
+# Some appliance targets intentionally ship a small subset of the common
+# context package. Paths in the file list refer to destinations after tags
+# such as "##vyos" have been removed.
+if [ -n "${FILELIST:-}" ]; then
+    SELECTED_DIR=$(mktemp -d)
+    while IFS= read -r FILE_PATH || [ -n "${FILE_PATH}" ]; do
+        case "${FILE_PATH}" in
+            ''|'#'*) continue ;;
+        esac
+        if [ ! -f "${BUILD_DIR}/${FILE_PATH}" ]; then
+            echo "Error: selected package file is missing: ${FILE_PATH}" >&2
+            exit 1
+        fi
+        mkdir -p "${SELECTED_DIR}/$(dirname "${FILE_PATH}")"
+        cp -p "${BUILD_DIR}/${FILE_PATH}" "${SELECTED_DIR}/${FILE_PATH}"
+    done <"${FILELIST}"
+    find "${BUILD_DIR}" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+    cp -R "${SELECTED_DIR}/." "${BUILD_DIR}/"
+    rm -rf "${SELECTED_DIR}"
+fi
+
+if [ -n "${OVERLAY:-}" ]; then
+    cp -R "${OVERLAY}/." "${BUILD_DIR}/"
+fi
+
 # fix permissions and set umask for fpm
 find "${BUILD_DIR}/" -perm -u+r -exec chmod go+r {} \;
 find "${BUILD_DIR}/" -perm -u+x -exec chmod go+x {} \;

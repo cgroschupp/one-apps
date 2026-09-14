@@ -1,0 +1,12 @@
+# Trigger a delayed context refresh when a VyOS network interface changes.
+SUBSYSTEM=="net", ACTION=="remove", \
+  RUN+="/bin/sh -c 'test -f /var/run/one-context/context.sh.local && echo >> /var/run/one-context/context.sh.local; test -f /var/run/one-context/context.sh.network && echo >> /var/run/one-context/context.sh.network'"
+
+SUBSYSTEM=="net", ACTION=="add|remove", \
+  RUN+="/bin/systemctl --no-block start one-context-reconfigure-delayed.service"
+
+# A changed OpenNebula CONTEXT ISO is applied immediately.
+SUBSYSTEM=="block", ACTION=="change", \
+  ENV{ID_CDROM}=="1", ENV{ID_FS_TYPE}=="iso9660", \
+  ENV{ID_FS_LABEL_ENC}=="CONTEXT", \
+  RUN+="/bin/systemctl --no-block start one-context-reconfigure.service"

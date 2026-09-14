@@ -1,0 +1,9 @@
+etc/one-context.d/loc-10-network.d/netcfg-vyos
+etc/one-context.d/loc-16-gen-env
+usr/lib/systemd/system/one-context-reconfigure-delayed.service
+usr/lib/systemd/system/one-context-reconfigure.service
+usr/lib/systemd/system/one-context-reconfigure.timer
+usr/lib/udev/rules.d/65-context-vyos.rules
+usr/sbin/one-context-run
+usr/sbin/one-contextd
+usr/share/doc/one-context-vyos/README.md

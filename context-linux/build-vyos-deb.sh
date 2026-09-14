@@ -28,10 +28,6 @@ mkdir -p "${PACKAGE_ROOT}" "${CONTROL_ROOT}" "${OUT_DIR}"
         OUT="${PACKAGE_ROOT}" ./generate.sh >/dev/null
 )
 
-sed "s/_PACKAGE_VERSION_/${VERSION}/g" \
-    "${PACKAGE_ROOT}/usr/sbin/onesysprep" >"${BUILD_DIR}/onesysprep"
-cat "${BUILD_DIR}/onesysprep" >"${PACKAGE_ROOT}/usr/sbin/onesysprep"
-
 cat >"${CONTROL_ROOT}/control" <<EOF
 Package: ${PACKAGE}
 Version: ${VERSION}-${RELEASE}
@@ -39,18 +35,18 @@ Section: admin
 Priority: optional
 Architecture: ${ARCH}
 Maintainer: ${MAINTAINER}
-Depends: util-linux, bash, curl, sudo, passwd, ruby
+Depends: util-linux, bash, curl, login
 Provides: one-context
 Replaces: one-context, addon-context
 Conflicts: one-context, one-context-ec2, addon-context
 Description: OpenNebula contextualization package for VyOS
- Reads the OpenNebula CONTEXT disk and applies network addresses, routes,
- DNS, hostname, credentials, SSH keys, and start scripts. Network settings
- are committed through the native VyOS configuration interface.
+ Reads the OpenNebula CONTEXT disk, exports the VRouter environment, and
+ applies addresses, routes, DNS, and hostname through the native VyOS
+ configuration interface.
 EOF
 
 cp "${SCRIPT_DIR}/pkg/postinstall.vyos" "${CONTROL_ROOT}/postinst"
-cp "${SCRIPT_DIR}/pkg/preuninstall" "${CONTROL_ROOT}/prerm"
+cp "${SCRIPT_DIR}/pkg/preuninstall.vyos" "${CONTROL_ROOT}/prerm"
 cp "${SCRIPT_DIR}/pkg/postuninstall" "${CONTROL_ROOT}/postrm"
 chmod 0755 "${CONTROL_ROOT}/postinst" "${CONTROL_ROOT}/prerm" "${CONTROL_ROOT}/postrm"
 

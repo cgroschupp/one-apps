@@ -1,9 +1,10 @@
 # one-context-vyos
 
-This package adapts the OpenNebula Linux contextualization service to VyOS.
-It reads the standard `CONTEXT` disk and supports the existing OpenNebula
-context variables, including `ETH<N>_*`, `ONEGATE_ENDPOINT`, `ONEGATE_TOKEN`,
-SSH keys, passwords, start scripts, and reconfiguration.
+This package provides the minimal OpenNebula contextualization service needed
+by the VyOS VRouter controller. It reads the standard `CONTEXT` disk and
+supports `ETH<N>_*`, `ONEGATE_ENDPOINT`, `ONEGATE_TOKEN`, and
+reconfiguration. It writes the controller environment to
+`/run/one-context/one_env`.
 
 The `netcfg-vyos` backend configures these values through the native VyOS CLI:
 
@@ -20,6 +21,10 @@ commands owned by contextualization are stored in
 `/config/one-context/network.commands`. During reconfiguration, the previous
 owned commands are deleted before the new desired commands are applied. Other
 VyOS configuration remains untouched.
+
+Generic Debian networking, NetworkManager, networkd, Netplan, cloud-init,
+GrowFS, swap, user, SSH, console, firewall, forwarding, and Ruby OneGate files
+are deliberately excluded from this package.
 
 The package provides and conflicts with `one-context`; install it instead of
 the generic Debian package:
