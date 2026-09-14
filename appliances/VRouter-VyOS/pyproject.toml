@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "one-vyos-vrouter"
+version = "0.2.0"
+description = "OpenNebula Virtual Router controller for VyOS"
+requires-python = ">=3.9"
+license = {text = "Apache-2.0"}
+authors = [{name = "OpenNebula Systems"}]
+dependencies = []
+
+[project.scripts]
+one-vyos-vrouter = "one_vrouter.reconciler:main"
+
+[tool.setuptools.packages.find]
+include = ["one_vrouter*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

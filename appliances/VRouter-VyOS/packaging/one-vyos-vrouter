@@ -1,0 +1,8 @@
+#!/usr/bin/python3
+import sys
+
+sys.path.insert(0, "/usr/lib/one-vyos-vrouter")
+
+from one_vrouter.reconciler import main
+
+raise SystemExit(main())

@@ -1,0 +1,16 @@
+[Unit]
+Description=OpenNebula Virtual Router controller for VyOS
+Documentation=file:/usr/share/doc/one-vyos-vrouter/README.md
+Wants=network-online.target
+After=network-online.target one-context.service
+ConditionPathExists=/run/one-context/one_env
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/one-vyos-vrouter
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=20
+
+[Install]
+WantedBy=multi-user.target
