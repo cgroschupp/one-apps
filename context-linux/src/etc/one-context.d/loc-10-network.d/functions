@@ -217,7 +217,7 @@ detect_os()
 
         case "$ID" in
             # supported distros
-            alpine|altlinux|debian|devuan|ubuntu|fedora|centos|rhel|almalinux|ol|rocky|opensuse*|sles|sled|amzn|freebsd)
+            alpine|altlinux|debian|devuan|ubuntu|fedora|centos|rhel|almalinux|ol|rocky|opensuse*|sles|sled|amzn|freebsd|vyos)
                 LINUX_ID=$ID
                 ;;
             *)

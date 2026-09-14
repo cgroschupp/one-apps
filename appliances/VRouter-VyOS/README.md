@@ -5,6 +5,10 @@ Router appliance services to native VyOS 1.5 configuration. It reads
 `/run/one-context/one_env`, bootstraps the local interfaces, polls OneGate, and
 commits changes only when the desired configuration changes.
 
+Use it together with `one-context-vyos`, the VyOS-specific contextualization
+package in `../../context-linux`. That package reads the CONTEXT disk and
+creates `/run/one-context/one_env` before this controller starts.
+
 Implemented feature mappings:
 
 - OpenNebula NIC addresses, VIPs, MTUs, gateways, and management NIC exclusion
@@ -63,16 +67,18 @@ source of truth and every boot performs a fresh reconciliation.
 
 ```sh
 make test
-make deb
+make deb-all
 ```
 
-The resulting package is written to
-`out/one-vyos-vrouter_0.2.0-1_all.deb`. For a persistent production appliance,
-include this package in the VyOS image build as a custom Debian package.
+The controller is written to `out/one-vyos-vrouter_0.2.0-1_all.deb`; the
+contextualization package is written to
+`../../context-linux/out/one-context-vyos_7.4.0-0.deb`. Include both custom
+Debian packages in the VyOS image build.
 
 For a live test installation:
 
 ```sh
+sudo dpkg -i ../../context-linux/out/one-context-vyos_7.4.0-0.deb
 sudo dpkg -i out/one-vyos-vrouter_0.2.0-1_all.deb
 sudo systemctl start one-vyos-vrouter.service
 sudo journalctl -u one-vyos-vrouter.service -f

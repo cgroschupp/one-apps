@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+SERVICES=${SERVICES:-one-context-local one-context-online one-context}
+TIMERS=${TIMERS:-one-context-reconfigure.timer}
+
+install -d -m 0700 /config/one-context
+
+if command -v systemctl >/dev/null 2>&1 && \
+    [ -d /etc/systemd ] && \
+    [ -f /usr/lib/systemd/system/one-context.service ];
+then
+    systemctl daemon-reload >/dev/null 2>&1 || :
+
+    for service in ${SERVICES} ${TIMERS}; do
+        systemctl enable "${service}" >/dev/null 2>&1 || :
+    done
+else
+    echo 'WARNING: Contextualization service not enabled automatically' >&2
+fi
+
+exit 0

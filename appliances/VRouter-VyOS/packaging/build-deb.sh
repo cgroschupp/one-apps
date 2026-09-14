@@ -42,7 +42,7 @@ Section: admin
 Priority: optional
 Architecture: ${ARCH}
 Maintainer: ${MAINTAINER}
-Depends: python3 (>= 3.9)
+Depends: python3 (>= 3.9), one-context
 Description: OpenNebula Virtual Router controller for VyOS
  Polls OneGate and reconciles OpenNebula VRouter interfaces, routing, NAT,
  DHCP, DNS, VRRP, WireGuard, IPVS, and HAProxy into native VyOS config.

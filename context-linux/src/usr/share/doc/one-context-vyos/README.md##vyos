@@ -1,0 +1,32 @@
+# one-context-vyos
+
+This package adapts the OpenNebula Linux contextualization service to VyOS.
+It reads the standard `CONTEXT` disk and supports the existing OpenNebula
+context variables, including `ETH<N>_*`, `ONEGATE_ENDPOINT`, `ONEGATE_TOKEN`,
+SSH keys, passwords, start scripts, and reconfiguration.
+
+The `netcfg-vyos` backend configures these values through the native VyOS CLI:
+
+- IPv4 and IPv6 interface addresses and aliases
+- DHCP, DHCPv6, and IPv6 SLAAC
+- Interface MTU
+- IPv4 and IPv6 default and static routes
+- A link-local route to the OneGate proxy
+- System DNS servers and search domains
+- `SET_HOSTNAME`
+
+Every transaction is committed and saved to `/config/config.boot`. The exact
+commands owned by contextualization are stored in
+`/config/one-context/network.commands`. During reconfiguration, the previous
+owned commands are deleted before the new desired commands are applied. Other
+VyOS configuration remains untouched.
+
+The package provides and conflicts with `one-context`; install it instead of
+the generic Debian package:
+
+```sh
+sudo dpkg -i one-context-vyos_7.4.0-0.deb
+```
+
+The generated environment for appliance services is available at
+`/run/one-context/one_env`. `TOKENTXT` contains the token itself, not a path.

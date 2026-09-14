@@ -32,6 +32,9 @@ fi
 # update detect_os function if new distro is added
 if [ -z "${NETCFG_TYPE}" ] ; then
     case "${os_id}${os_ver}" in
+        vyos*)
+            NETCFG_TYPE='vyos'
+            ;;
         alpine*)
             NETCFG_TYPE='interfaces'
             ;;
@@ -88,6 +91,9 @@ else
             ;;
         freebsd)
             NETCFG_TYPE='bsd'
+            ;;
+        vyos)
+            NETCFG_TYPE='vyos'
             ;;
     esac
 fi

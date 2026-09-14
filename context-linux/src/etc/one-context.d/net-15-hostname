@@ -16,6 +16,17 @@
 # limitations under the License.                                             #
 #--------------------------------------------------------------------------- #
 
+# The VyOS network backend applies hostname and domain through the native
+# configuration tree. Direct changes to /etc/hostname, /etc/hosts, and
+# /etc/resolv.conf would be overwritten by VyOS.
+if [ -r /etc/os-release ]; then
+    _one_os_id=
+    # shellcheck disable=SC1091
+    . /etc/os-release
+    _one_os_id=${ID:-}
+    [ "${_one_os_id}" = 'vyos' ] && exit 0
+fi
+
 _kernel="$(uname -s)"
 if [ "${_kernel}" = 'FreeBSD' ]; then
     SED_I="sed -i ''"
@@ -85,11 +96,12 @@ function get_first_ip() {
 }
 
 function get_dns_name() {
-    text=$(LC_ALL=C host "$1" 2>/dev/null)
-    [ $? = 0 ] || exit 0
+    if ! text=$(LC_ALL=C host "$1" 2>/dev/null); then
+        exit 0
+    fi
     [[ $text == *"has no PTR record" ]] && exit 0
     name=$(echo "$text" | awk '/(has address|name pointer)/ {print $(NF)}' | sed 's/\.$//')
-    echo $name
+    echo "$name"
 }
 
 function update_hosts() {
@@ -97,7 +109,7 @@ function update_hosts() {
     name=$2
     hostname=$3
 
-    if [ "x${hostname}" = "x${name}" ]; then
+    if [ "${hostname}" = "${name}" ]; then
         hosts="${name}"
     else
         hosts="${name} ${hostname}"

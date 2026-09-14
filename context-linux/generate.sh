@@ -97,7 +97,7 @@ trap "rm -rf ${UNAME_PATH} ${BUILD_DIR} ${_POSTIN} ${_PREUN} ${_POSTUN} ${_POSTU
 
 while IFS= read -r -d $'\0' SRC; do
     F_TAGS=${SRC##*##}
-    if [ "x${SRC}" != "x${F_TAGS}" ]; then
+    if [ "${SRC}" != "${F_TAGS}" ]; then
         # shellcheck disable=SC2001
         for F_TAG in $(echo "${F_TAGS}" | sed -e 's/\./ /g'); do
             for TAG in ${TAGS}; do
@@ -146,7 +146,8 @@ EOF
 fi
 
 if [ "${TYPE}" = 'dir' ]; then
-    cp -rT "${BUILD_DIR}" "${OUT}"
+    mkdir -p "${OUT}"
+    cp -R "${BUILD_DIR}/." "${OUT}/"
 
 elif [ "${TYPE}" = 'iso' ]; then
     _out_dir=$(dirname "${OUT}")
@@ -154,14 +155,17 @@ elif [ "${TYPE}" = 'iso' ]; then
         -m '*.iso' \
         -V "${LABEL}" \
         -o "${OUT}" \
-        ${_out_dir}/one-context?${VERSION}*
+        "${_out_dir}"/one-context?"${VERSION}"*
 
 else
+    # BSD find (used on macOS build hosts) has no -printf. File names in the
+    # package tree contain no whitespace, so this portable form can be safely
+    # expanded into fpm arguments below.
     CONFIG_FILES=$(cd "${BUILD_DIR}" && \
         find etc/ \
             ! -path 'etc/one-context.d/*' \
             ! -path 'etc/init*' \
-            -type f -printf '--config-files %p ')
+            -type f -print | sed -e 's#^#--config-files #')
 
     # concatenate pre/postinstall scripts
     if [ -n "${POSTIN}" ]; then
@@ -181,8 +185,10 @@ else
     fi
 
     # set the package version of onesysprep
-    sed -i "s/\<_PACKAGE_VERSION_\>/${VERSION}/" \
-        "${BUILD_DIR}/usr/sbin/onesysprep"
+    sed "s/_PACKAGE_VERSION_/${VERSION}/g" \
+        "${BUILD_DIR}/usr/sbin/onesysprep" >"${BUILD_DIR}/usr/sbin/onesysprep.new"
+    cat "${BUILD_DIR}/usr/sbin/onesysprep.new" >"${BUILD_DIR}/usr/sbin/onesysprep"
+    rm -f "${BUILD_DIR}/usr/sbin/onesysprep.new"
 
     # apk-tools v3 (Alpine 3.23+) requires 'noarch', not 'all'
     if [ "${TYPE}" = 'apk' ]; then
@@ -215,6 +221,11 @@ else
         --pacman-group 0 \
         ${CONFIG_FILES} \
         --package "${OUT}"
+
+    if [ ! -f "${OUT}" ]; then
+        echo "Error: package builder did not create ${OUT}" >&2
+        exit 1
+    fi
 
     # APK v2: inject datahash for apk-tools v3 (Alpine 3.23+)
     if [ "${TYPE}" = 'apk' ]; then

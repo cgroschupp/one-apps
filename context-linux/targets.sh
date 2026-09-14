@@ -1,4 +1,19 @@
 case "${TARGET}" in
+    'vyos')
+        NAME=${NAME:-one-context-vyos}
+        RELSUFFIX=${RELSUFFIX:-}
+        TYPE=${TYPE:-deb}
+        TAGS=${TAGS:-linux deb systemd one vyos}
+        DEPENDS=${DEPENDS:-util-linux bash curl sudo passwd ruby}
+        PROVIDES=${PROVIDES:-one-context}
+        REPLACES=${REPLACES:-one-context addon-context}
+        CONFLICTS=${CONFLICTS:-one-context one-context-ec2 addon-context}
+        POSTIN=${POSTINST:-pkg/postinstall.vyos}
+        PREUN=${PREUN:-pkg/preuninstall}
+        POSTUN=${POSTUN:-pkg/postuninstall}
+        POSTUP=${POSTUP:-pkg/postupgrade}
+        ;;
+
     'pfsense')
         NAME=${NAME:-one-context}
         RELSUFFIX=${RELSUFFIX:-}
