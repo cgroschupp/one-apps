@@ -16,5 +16,7 @@ context-linux/*.rpm
 context-linux/*.deb
 context-linux/.vagrant*/
 context-linux/*~bak
+appliances/VRouter-VyOS/out/
 .vscode
 .DS_Store
+__pycache__
